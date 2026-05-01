@@ -1,0 +1,1727 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Rivqi Gallery</title>
+    
+    <!-- Font Awesome untuk ikon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* ============================================
+           CSS VARIABLES & RESET
+           ============================================ */
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #1a1a1a;
+            --bg-card: #1e1e1e;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --accent-neon: #c0a060;
+            --accent-gold: #d4af37;
+            --accent-blue: #4a9eff;
+            --border-color: #333333;
+            --shadow-color: rgba(192, 160, 96, 0.3);
+            --glass-bg: rgba(30, 30, 30, 0.8);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-bounce: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .light-mode {
+            --bg-primary: #f5f5f5;
+            --bg-secondary: #ffffff;
+            --bg-card: #e8e8e8;
+            --text-primary: #1a1a1a;
+            --text-secondary: #555555;
+            --accent-neon: #8b6914;
+            --accent-gold: #b8960c;
+            --accent-blue: #2563eb;
+            --border-color: #d0d0d0;
+            --shadow-color: rgba(139, 105, 20, 0.2);
+            --glass-bg: rgba(255, 255, 255, 0.8);
+            --glass-border: rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Poppins', system-ui, -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            transition: var(--transition-smooth);
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* ============================================
+           STARFIELD CANVAS BACKGROUND
+           ============================================ */
+        #starfield {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* ============================================
+           MAIN CONTAINER & LAYOUT
+           ============================================ */
+        .app-container {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Page container */
+        .page {
+            display: none;
+            flex: 1;
+            padding: 20px;
+            padding-bottom: 80px; /* Space for bottom nav on mobile */
+            animation: fadeSlideIn 0.5s ease;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        @keyframes fadeSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ============================================
+           NAVIGATION - DESKTOP (Sidebar)
+           ============================================ */
+        .desktop-nav {
+            display: none;
+            position: fixed;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 100;
+            flex-direction: column;
+            gap: 10px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 15px 10px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .desktop-nav .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: var(--transition-bounce);
+            color: var(--text-secondary);
+            text-decoration: none;
+            white-space: nowrap;
+            position: relative;
+        }
+
+        .desktop-nav .nav-item i {
+            font-size: 1.3rem;
+            width: 24px;
+            text-align: center;
+        }
+
+        .desktop-nav .nav-item span {
+            font-size: 0.85rem;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .desktop-nav .nav-item:hover {
+            background: var(--accent-gold);
+            color: #000;
+            transform: translateX(5px);
+        }
+
+        .desktop-nav .nav-item.active {
+            background: var(--accent-neon);
+            color: #000;
+            font-weight: 600;
+            box-shadow: 0 0 20px var(--shadow-color);
+        }
+
+        /* ============================================
+           NAVIGATION - MOBILE (Bottom Bar)
+           ============================================ */
+        .mobile-nav {
+            display: flex;
+            position: fixed;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 25px;
+            padding: 8px 20px;
+            gap: 10px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            width: auto;
+            max-width: 95vw;
+        }
+
+        .mobile-nav .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 18px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: var(--transition-bounce);
+            color: var(--text-secondary);
+            text-decoration: none;
+            min-width: 60px;
+        }
+
+        .mobile-nav .nav-item i {
+            font-size: 1.4rem;
+            margin-bottom: 4px;
+        }
+
+        .mobile-nav .nav-item span {
+            font-size: 0.7rem;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+        }
+
+        .mobile-nav .nav-item.active {
+            background: var(--accent-neon);
+            color: #000;
+            font-weight: 600;
+            box-shadow: 0 4px 15px var(--shadow-color);
+        }
+
+        /* ============================================
+           HOME PAGE
+           ============================================ */
+        .home-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 80vh;
+            text-align: center;
+        }
+
+        .profile-image-container {
+            position: relative;
+            width: 180px;
+            height: 180px;
+            margin-bottom: 30px;
+        }
+
+        .profile-image {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid var(--accent-gold);
+            box-shadow: 0 0 30px var(--shadow-color), 0 0 60px rgba(212, 175, 55, 0.2);
+            animation: glowPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes glowPulse {
+            0%, 100% { box-shadow: 0 0 30px var(--shadow-color), 0 0 60px rgba(212, 175, 55, 0.2); }
+            50% { box-shadow: 0 0 50px var(--shadow-color), 0 0 90px rgba(212, 175, 55, 0.4); }
+        }
+
+        .typing-container {
+            font-size: 1.8rem;
+            font-weight: 300;
+            letter-spacing: 2px;
+            min-height: 50px;
+            color: var(--accent-gold);
+        }
+
+        .typing-cursor {
+            display: inline-block;
+            width: 2px;
+            height: 1.8rem;
+            background: var(--accent-gold);
+            margin-left: 3px;
+            animation: blink 0.8s infinite;
+            vertical-align: text-bottom;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        .subtitle {
+            margin-top: 15px;
+            font-size: 1rem;
+            color: var(--text-secondary);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            animation: fadeInUp 1s ease 0.5s both;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ============================================
+           GALLERY PAGE
+           ============================================ */
+        .gallery-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 10px;
+        }
+
+        .gallery-title {
+            text-align: center;
+            font-size: 2rem;
+            font-weight: 300;
+            letter-spacing: 3px;
+            margin-bottom: 25px;
+            color: var(--accent-gold);
+        }
+
+        /* Main carousel */
+        .carousel-main {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto 20px;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .carousel-track {
+            display: flex;
+            transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            will-change: transform;
+        }
+
+        .carousel-slide {
+            min-width: 100%;
+            position: relative;
+        }
+
+        .carousel-slide img {
+            width: 100%;
+            height: 400px;
+            object-fit: cover;
+            display: block;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+        }
+
+        .carousel-slide img:active {
+            transform: scale(1.05);
+        }
+
+        /* Bubble effect on tap */
+        .bubble-effect {
+            position: absolute;
+            pointer-events: none;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.4);
+            animation: bubblePop 0.6s ease-out forwards;
+            z-index: 10;
+        }
+
+        @keyframes bubblePop {
+            0% {
+                width: 0;
+                height: 0;
+                opacity: 1;
+            }
+            100% {
+                width: 200px;
+                height: 200px;
+                opacity: 0;
+                transform: translate(-50%, -50%);
+            }
+        }
+
+        /* Image expand overlay */
+        .image-expand-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .image-expand-overlay img {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 10px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+            animation: scaleIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes scaleIn {
+            from { transform: scale(0.5); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        /* Bottom row - 2 images side by side */
+        .gallery-bottom-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .gallery-thumb-card {
+            position: relative;
+            border-radius: 15px;
+            overflow: hidden;
+            cursor: pointer;
+            aspect-ratio: 1 / 1;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+            transition: var(--transition-bounce);
+        }
+
+        .gallery-thumb-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px var(--shadow-color);
+        }
+
+        .gallery-thumb-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: var(--transition-smooth);
+        }
+
+        .gallery-thumb-card:active img {
+            transform: scale(1.08);
+        }
+
+        .gallery-thumb-card .card-label {
+            position: absolute;
+            bottom: 8px;
+            left: 8px;
+            background: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            letter-spacing: 1px;
+        }
+
+        /* Carousel nav buttons */
+        .carousel-nav {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .carousel-nav button {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: var(--transition-bounce);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .carousel-nav button:hover {
+            background: var(--accent-gold);
+            color: #000;
+            transform: scale(1.1);
+        }
+
+        .carousel-dots {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .carousel-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--border-color);
+            cursor: pointer;
+            transition: var(--transition-smooth);
+        }
+
+        .carousel-dot.active {
+            background: var(--accent-gold);
+            box-shadow: 0 0 10px var(--shadow-color);
+            width: 24px;
+            border-radius: 10px;
+        }
+
+        /* ============================================
+           MINI GAME PAGE
+           ============================================ */
+        .game-container {
+            max-width: 500px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .game-title {
+            font-size: 2rem;
+            font-weight: 300;
+            letter-spacing: 3px;
+            margin-bottom: 10px;
+            color: var(--accent-gold);
+        }
+
+        .game-score {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            color: var(--text-secondary);
+        }
+
+        .game-score span {
+            color: var(--accent-gold);
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+
+        /* Memory Card Grid */
+        .memory-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .memory-card {
+            aspect-ratio: 1 / 1;
+            perspective: 1000px;
+            cursor: pointer;
+        }
+
+        .memory-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+        }
+
+        .memory-card.flipped .memory-card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .memory-card.matched .memory-card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .memory-card.matched {
+            pointer-events: none;
+        }
+
+        .memory-card-front,
+        .memory-card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+        }
+
+        .memory-card-front {
+            background: linear-gradient(135deg, var(--accent-gold), #8b6914);
+            border: 2px solid var(--accent-gold);
+        }
+
+        .memory-card-back {
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            transform: rotateY(180deg);
+            font-size: 2.5rem;
+        }
+
+        .memory-card.matched .memory-card-back {
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 20px var(--shadow-color);
+        }
+
+        .game-btn {
+            background: var(--accent-gold);
+            color: #000;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            letter-spacing: 1px;
+            margin-top: 20px;
+            transition: var(--transition-bounce);
+        }
+
+        .game-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 25px var(--shadow-color);
+        }
+
+        .game-message {
+            margin-top: 15px;
+            font-size: 1.1rem;
+            color: var(--accent-gold);
+            min-height: 30px;
+        }
+
+        /* ============================================
+           FLOATING MUSIC PLAYER
+           ============================================ */
+        .fab-music {
+            position: fixed;
+            bottom: 100px;
+            right: 20px;
+            z-index: 150;
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            background: var(--accent-gold);
+            border: none;
+            cursor: pointer;
+            font-size: 1.5rem;
+            color: #000;
+            box-shadow: 0 8px 25px rgba(212, 175, 55, 0.5);
+            transition: var(--transition-bounce);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: floatAnim 3s ease-in-out infinite;
+        }
+
+        @keyframes floatAnim {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .fab-music:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 35px rgba(212, 175, 55, 0.7);
+        }
+
+        .fab-music.playing {
+            animation: floatAnim 3s ease-in-out infinite, spinPulse 2s linear infinite;
+        }
+
+        @keyframes spinPulse {
+            0% { box-shadow: 0 8px 25px rgba(212, 175, 55, 0.5); }
+            50% { box-shadow: 0 8px 40px rgba(212, 175, 55, 0.9); }
+            100% { box-shadow: 0 8px 25px rgba(212, 175, 55, 0.5); }
+        }
+
+        /* Music player panel */
+        .music-player-panel {
+            position: fixed;
+            bottom: 170px;
+            right: 20px;
+            z-index: 149;
+            background: var(--glass-bg);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 20px;
+            width: 280px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
+            transform: translateY(20px);
+            opacity: 0;
+            pointer-events: none;
+            transition: var(--transition-smooth);
+        }
+
+        .music-player-panel.open {
+            transform: translateY(0);
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .music-player-panel h4 {
+            text-align: center;
+            font-weight: 400;
+            letter-spacing: 2px;
+            margin-bottom: 15px;
+            color: var(--accent-gold);
+        }
+
+        .music-info {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .music-info .song-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .music-info .song-artist {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .music-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .music-controls button {
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-size: 1.3rem;
+            cursor: pointer;
+            transition: var(--transition-bounce);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .music-controls button:hover {
+            color: var(--accent-gold);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .music-controls .btn-play {
+            width: 50px;
+            height: 50px;
+            background: var(--accent-gold);
+            color: #000;
+            border-radius: 50%;
+            font-size: 1.5rem;
+        }
+
+        .music-controls .btn-play:hover {
+            background: #c0a060;
+            transform: scale(1.1);
+        }
+
+        .music-progress {
+            width: 100%;
+            height: 3px;
+            background: var(--border-color);
+            border-radius: 3px;
+            margin-top: 15px;
+            cursor: pointer;
+        }
+
+        .music-progress-bar {
+            height: 100%;
+            background: var(--accent-gold);
+            border-radius: 3px;
+            width: 0%;
+            transition: width 0.3s linear;
+        }
+
+        .playlist {
+            margin-top: 12px;
+            max-height: 100px;
+            overflow-y: auto;
+        }
+
+        .playlist-item {
+            padding: 6px 10px;
+            cursor: pointer;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            transition: var(--transition-smooth);
+            color: var(--text-secondary);
+        }
+
+        .playlist-item:hover,
+        .playlist-item.active {
+            background: rgba(192, 160, 96, 0.2);
+            color: var(--accent-gold);
+        }
+
+        /* ============================================
+           THEME TOGGLE
+           ============================================ */
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 150;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            cursor: pointer;
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition-bounce);
+            color: var(--text-primary);
+        }
+
+        .theme-toggle:hover {
+            transform: rotate(30deg);
+        }
+
+        .theme-toggle .fa-sun {
+            display: none;
+        }
+        .light-mode .theme-toggle .fa-moon {
+            display: none;
+        }
+        .light-mode .theme-toggle .fa-sun {
+            display: inline-block;
+        }
+
+        /* ============================================
+           RESPONSIVE MEDIA QUERIES
+           ============================================ */
+        @media (min-width: 768px) {
+            .desktop-nav {
+                display: flex;
+            }
+            .mobile-nav {
+                display: none;
+            }
+            .page {
+                padding-bottom: 20px;
+                padding-left: 100px;
+            }
+            .fab-music {
+                bottom: 30px;
+                right: 30px;
+            }
+            .music-player-panel {
+                bottom: 100px;
+                right: 30px;
+            }
+            .carousel-slide img {
+                height: 450px;
+            }
+            .memory-grid {
+                grid-template-columns: repeat(4, 1fr);
+                max-width: 450px;
+            }
+        }
+
+        @media (max-width: 767px) {
+            .desktop-nav {
+                display: none;
+            }
+            .mobile-nav {
+                display: flex;
+            }
+            .carousel-slide img {
+                height: 280px;
+            }
+            .profile-image-container {
+                width: 140px;
+                height: 140px;
+            }
+            .typing-container {
+                font-size: 1.3rem;
+            }
+            .gallery-bottom-row {
+                gap: 10px;
+            }
+            .memory-grid {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 6px;
+                max-width: 320px;
+            }
+            .memory-card-front,
+            .memory-card-back {
+                font-size: 1.5rem;
+            }
+            .theme-toggle {
+                top: 10px;
+                right: 10px;
+                width: 40px;
+                height: 40px;
+                font-size: 1.1rem;
+            }
+            .fab-music {
+                bottom: 90px;
+                right: 10px;
+                width: 45px;
+                height: 45px;
+                font-size: 1.2rem;
+                transform: scale(1);
+            }
+            @keyframes floatAnim {
+                0%, 100% { transform: translateY(0) scale(1); }
+                50% { transform: translateY(-5px) scale(1); }
+            }
+            .music-player-panel {
+                bottom: 150px;
+                right: 5px;
+                width: 250px;
+                padding: 15px;
+            }
+        }
+
+        @media (max-width: 380px) {
+            .mobile-nav .nav-item {
+                padding: 8px 12px;
+                min-width: 45px;
+            }
+            .mobile-nav .nav-item i {
+                font-size: 1.1rem;
+            }
+            .mobile-nav .nav-item span {
+                font-size: 0.6rem;
+            }
+            .memory-grid {
+                max-width: 260px;
+                gap: 4px;
+            }
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent-gold);
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ============================================
+    STARFIELD CANVAS
+    ============================================ -->
+    <canvas id="starfield"></canvas>
+
+    <!-- ============================================
+    THEME TOGGLE BUTTON
+    ============================================ -->
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+        <i class="fas fa-moon"></i>
+        <i class="fas fa-sun"></i>
+    </button>
+
+    <!-- ============================================
+    DESKTOP NAVIGATION (Sidebar)
+    ============================================ -->
+    <nav class="desktop-nav" id="desktopNav">
+        <div class="nav-item active" data-page="home">
+            <i class="fas fa-home"></i>
+            <span>Home</span>
+        </div>
+        <div class="nav-item" data-page="gallery">
+            <i class="fas fa-images"></i>
+            <span>Gallery</span>
+        </div>
+        <div class="nav-item" data-page="game">
+            <i class="fas fa-gamepad"></i>
+            <span>Mini Game</span>
+        </div>
+    </nav>
+
+    <!-- ============================================
+    MOBILE NAVIGATION (Bottom Bar)
+    ============================================ -->
+    <nav class="mobile-nav" id="mobileNav">
+        <div class="nav-item active" data-page="home">
+            <i class="fas fa-home"></i>
+            <span>Home</span>
+        </div>
+        <div class="nav-item" data-page="gallery">
+            <i class="fas fa-images"></i>
+            <span>Gallery</span>
+        </div>
+        <div class="nav-item" data-page="game">
+            <i class="fas fa-gamepad"></i>
+            <span>Game</span>
+        </div>
+    </nav>
+
+    <!-- ============================================
+    MAIN APP CONTAINER
+    ============================================ -->
+    <div class="app-container" id="appContainer">
+
+        <!-- ==================== HOME PAGE ==================== -->
+        <div class="page active" id="page-home">
+            <div class="home-content">
+                <!-- Profile Image - GANTI src DENGAN URL FOTO ANDA -->
+                <div class="profile-image-container">
+                    <img src= "https://i.ibb.co/0jGgN2vs/IMG-20260501-220445.jpg"
+                         alt="Profile" 
+                         class="profile-image"
+                         id="profileImage">
+                </div>
+                
+                <!-- Typing Effect -->
+                <div class="typing-container">
+                    <span id="typingText"></span>
+                    <span class="typing-cursor"></span>
+                </div>
+                
+                <p class="subtitle">Creative Developer & Designer, Jangan Lupa Follow 
+                 Ig @rivisnear</p>
+            </div>
+        </div>
+
+        <!-- ==================== GALLERY PAGE ==================== -->
+        <div class="page" id="page-gallery">
+            <div class="gallery-container">
+                <h2 class="gallery-title">✦ Gallery ✦</h2>
+                
+                <!-- Main Carousel -->
+                <div class="carousel-main" id="carouselMain">
+                    <div class="carousel-track" id="carouselTrack">
+                        <!-- GANTI SEMUA src DENGAN GAMBAR ANDA SENDIRI -->
+                        <!-- 25 Placeholder Images - Ganti satu per satu -->
+                        <div class="carousel-slide"><img src="https://i.ibb.co/ZpjnYWBj/Sky-Anak-Anak-Cahaya-20260420190045.jpg" alt="Gallery 1" loading="lazy"></div>
+                        <div class="carousel-slide"><img src="https://i.ibb.co/m5xzqZNd/Sky-Anak-Anak-Cahaya-20260420190059.jpg" alt="Gallery 2" loading="lazy"></div>
+                        <div class="carousel-slide"><img src="https://i.ibb.co/SXqXfR23/Sky-Anak-Anak-Cahaya-20260416222951.jpg" alt="Gallery 3" loading="lazy"></div>
+                        <div class="carousel-slide"><img src="https://i.ibb.co/0jwgsMTY/Sky-Anak-Anak-Cahaya-20260415221617.jpg" alt="Gallery 4" loading="lazy"></div>
+                        <div class="carousel-slide"><img src="https://i.ibb.co/CKBkmGx2/Sky-Anak-Anak-Cahaya-20260415215238.jpg" alt="Gallery 5" loading="lazy"></div>
+                        <div class="carousel-slide"><img src="https://i.ibb.co/ccxzF3f0/Sky-Anak-Anak-Cahaya-20260416225644.jpg" alt="Gallery 6" loading="lazy"></div>
+                        <div class="carousel-slide"><img src="https://i.ibb.co/KpFBgjF9/Sky-Anak-Anak-Cahaya-20260416224118.jpg" alt="Gallery 7" loading="lazy"></div>
+                        <div class="carousel-slide"><img src="https://i.ibb.co/5XjCM8Gn/Sky-Anak-Anak-Cahaya-20260416224000.jpg" alt="Gallery 8" loading="lazy"></div>
+                        <div class="carousel-slide"><img src="https://i.ibb.co/JWNMz1V4/Sky-Anak-Anak-Cahaya-20260416223903.jpg" alt="Gallery 9" loading="lazy"></div>
+                        <div class="carousel-slide"><img src="https://i.ibb.co/twX1r9m2/Sky-Anak-Anak-Cahaya-20260416223255.jpg" alt="Gallery 10" loading="lazy"></div>
+                        <div class="carousel-slide"><img src="https://i.ibb.co/0Vtxfmdg/Sky-Anak-Anak-Cahaya-20260414163642.jpg" alt="Gallery 11" loading="lazy"></div>
+                        <div class="carousel-slide"><img src="https://i.ibb.co/L38G4gd/Roblox-20260430222921.jpg" alt="Gallery 12" loading="lazy"></div>
+                        <div class="carousel-slide"><img src="https://i.ibb.co/pjhSr2dg/Roblox-20260430222818.jpg" alt="Gallery 13" loading="lazy"></div>
+                        <div class="carousel-slide"><img src="https://i.ibb.co/mVyVh26q/Roblox-20260430223103.jpg" alt="Gallery 14" loading="lazy"></div>
+                        <div class="carousel-slide"><img src="https://i.ibb.co/ZzGQQvKD/Roblox-20260430224031.jpg" alt="Gallery 15" loading="lazy"></div>
+                        <div class="carousel-slide"><img src="https://i.ibb.co/XrVRmFFL/Roblox-20260417011939.jpg" alt="Gallery 16" loading="lazy"></div>
+                        <div class="carousel-slide"><img src="https://i.ibb.co/R4TXphhL/Roblox-20260417011828.jpg" alt="Gallery 17" loading="lazy"></div>
+                        <div class="carousel-slide"><img src="https://i.ibb.co/4n7hmV8K/Roblox-20260412052510.jpg" alt="Gallery 18" loading="lazy"></div>
+                        <div class="carousel-slide"><img src="https://i.ibb.co/mF0Q26jJ/Roblox-20260412061216.jpg" alt="Gallery 19" loading="lazy"></div>
+                        <div class="carousel-slide"><img src="https://i.ibb.co/p6nDDnW8/Roblox-20260412132206.jpg" alt="Gallery 20" loading="lazy"></div>
+                        <div class="carousel-slide"><img src="https://i.ibb.co/DDvWTsDK/IMG-20260419-WA0030.jpg" alt="Gallery 21" loading="lazy"></div>
+                        <div class="carousel-slide"><img src="https://i.ibb.co/tp4rk74w/IMG-20260428-212527.jpg" alt="Gallery 22" loading="lazy"></div>
+                        <div class="carousel-slide"><img src="https://i.ibb.co/chdtpr3t/IMG-20260325-WA0006.jpg" alt="Gallery 23" loading="lazy"></div>
+                        <div class="carousel-slide"><img src="https://i.ibb.co/fZFPvSs/IMG-20260325-WA0011.jpg" alt="Gallery 24" loading="lazy"></div>
+                        <div class="carousel-slide"><img src="https://i.ibb.co/p6kwKHB8/Screenshot-2026-05-02-02-36-35-05.png" alt="Gallery 25" loading="lazy"></div>
+                    </div>
+                </div>
+                
+                <!-- Carousel Controls -->
+                <div class="carousel-nav">
+                    <button id="carouselPrev"><i class="fas fa-chevron-left"></i></button>
+                    <button id="carouselNext"><i class="fas fa-chevron-right"></i></button>
+                </div>
+                <div class="carousel-dots" id="carouselDots"></div>
+                
+                <!-- Bottom Row - 2 Images Side by Side -->
+                <div class="gallery-bottom-row" id="galleryThumbs">
+                    <!-- GANTI src DENGAN GAMBAR ANDA -->
+                    <div class="gallery-thumb-card" data-index="0">
+                        <img src="https://i.ibb.co/qY0y3thm/Sky-Anak-Anak-Cahaya-20260415200525.jpg" alt="Thumb 1" loading="lazy">
+                        <span class="card-label">Featured</span>
+                    </div>
+                    <div class="gallery-thumb-card" data-index="1">
+                        <img src="https://i.ibb.co/rRPVqjF8/Sky-Anak-Anak-Cahaya-20260420220554.jpg" alt="Thumb 2" loading="lazy">
+                        <span class="card-label">Latest</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== MINI GAME PAGE ==================== -->
+        <div class="page" id="page-game">
+            <div class="game-container">
+                <h2 class="game-title">🎮 Memory Match</h2>
+                <div class="game-score">
+                    Moves: <span id="gameMoves">0</span> | 
+                    Matched: <span id="gameMatched">0</span>/8
+                </div>
+                <div class="memory-grid" id="memoryGrid"></div>
+                <div class="game-message" id="gameMessage"></div>
+                <button class="game-btn" id="gameRestart">
+                    <i class="fas fa-redo"></i> Restart Game
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ============================================
+    FLOATING MUSIC PLAYER - FAB
+    ============================================ -->
+    <button class="fab-music" id="fabMusic" aria-label="Music Player">
+        <i class="fas fa-music"></i>
+    </button>
+
+    <!-- Music Player Panel -->
+    <div class="music-player-panel" id="musicPanel">
+        <h4>🎵 Music Player</h4>
+        <div class="music-info">
+            <div class="song-title" id="songTitle">Select a Song</div>
+            <div class="song-artist" id="songArtist">-</div>
+        </div>
+        <div class="music-controls">
+            <button id="btnPrev" title="Previous"><i class="fas fa-backward"></i></button>
+            <button class="btn-play" id="btnPlay" title="Play/Pause"><i class="fas fa-play"></i></button>
+            <button id="btnNext" title="Next"><i class="fas fa-forward"></i></button>
+        </div>
+        <div class="music-progress" id="musicProgress">
+            <div class="music-progress-bar" id="musicProgressBar"></div>
+        </div>
+        <div class="playlist" id="playlist">
+            <!-- Playlist items generated by JS -->
+        </div>
+    </div>
+
+    <!-- Hidden Audio Element -->
+    <audio id="audioPlayer" preload="none"></audio>
+
+    <!-- ============================================
+    IMAGE EXPAND OVERLAY (Hidden)
+    ============================================ -->
+    <div class="image-expand-overlay" id="imageExpandOverlay" style="display: none;">
+        <img src="" alt="Expanded view" id="expandedImage">
+    </div>
+
+    <script>
+        // ============================================
+        // JAVASCRIPT - MAIN APPLICATION
+        // ============================================
+
+        (function() {
+            // ============ DOM ELEMENTS ============
+            const appContainer = document.getElementById('appContainer');
+            const pages = document.querySelectorAll('.page');
+            const desktopNavItems = document.querySelectorAll('.desktop-nav .nav-item');
+            const mobileNavItems = document.querySelectorAll('.mobile-nav .nav-item');
+            const themeToggle = document.getElementById('themeToggle');
+            const starfieldCanvas = document.getElementById('starfield');
+            const ctx = starfieldCanvas.getContext('2d');
+            
+            // Gallery elements
+            const carouselTrack = document.getElementById('carouselTrack');
+            const carouselSlides = document.querySelectorAll('.carousel-slide');
+            const carouselPrev = document.getElementById('carouselPrev');
+            const carouselNext = document.getElementById('carouselNext');
+            const carouselDots = document.getElementById('carouselDots');
+            const galleryThumbs = document.querySelectorAll('.gallery-thumb-card');
+            const imageExpandOverlay = document.getElementById('imageExpandOverlay');
+            const expandedImage = document.getElementById('expandedImage');
+            
+            // Music player elements
+            const fabMusic = document.getElementById('fabMusic');
+            const musicPanel = document.getElementById('musicPanel');
+            const audioPlayer = document.getElementById('audioPlayer');
+            const btnPlay = document.getElementById('btnPlay');
+            const btnPrev = document.getElementById('btnPrev');
+            const btnNext = document.getElementById('btnNext');
+            const songTitle = document.getElementById('songTitle');
+            const songArtist = document.getElementById('songArtist');
+            const musicProgress = document.getElementById('musicProgress');
+            const musicProgressBar = document.getElementById('musicProgressBar');
+            const playlistEl = document.getElementById('playlist');
+            
+            // Game elements
+            const memoryGrid = document.getElementById('memoryGrid');
+            const gameMovesEl = document.getElementById('gameMoves');
+            const gameMatchedEl = document.getElementById('gameMatched');
+            const gameMessage = document.getElementById('gameMessage');
+            const gameRestart = document.getElementById('gameRestart');
+            
+            // Typing effect
+            const typingText = document.getElementById('typingText');
+
+            // ============ STATE ============
+            let currentPage = 'home';
+            let carouselIndex = 0;
+            const totalSlides = 25;
+            let isMusicPanelOpen = false;
+            let currentSongIndex = 0;
+            let isPlaying = false;
+            
+            // Game state
+            let gameCards = [];
+            let flippedCards = [];
+            let matchedPairs = 0;
+            let gameMoves = 0;
+            let gameLocked = false;
+            const totalPairs = 8;
+            
+            // Touch/swipe state
+            let touchStartX = 0;
+            let touchEndX = 0;
+            let touchStartY = 0;
+            let touchEndY = 0;
+
+            // ============ MUSIC PLAYLIST - GANTI URL LAGU DI SINI ============
+            const playlist = [
+                { 
+                    title: 'Kicau Mania', 
+                    artist: 'Anindito Adhi Rahman dan Helarius Daru Indrajaya (Ndarboy Genk)',
+                    url: 'https://file.garden/afUH-nUJmzltJont/DJ%20KICAU%20MANIA%20X%20TOR%20MONITOR%20REMIX%20FULL%20BASS%20VIRAL%20TIKTOK%20TERBARU%202026.mp3'
+                },
+                { 
+                    title: 'Kasih Putih', 
+                    artist: 'Glenn Fredly',
+                    url: 'https://file.garden/afUH-nUJmzltJont/Glenn%20Fredly%20-%20Kasih%20Putih'
+                },
+                { 
+                    title: 'Bahagia Lagi', 
+                    artist: 'Piche Kota',
+                    url: 'https://file.garden/afUH-nUJmzltJont/Bahagia%20Lagi%20-%20Piche%20Kota%20%20Lirik%20Lagu.mp3'
+                },
+                { 
+                    title: 'Selamat (Selamat Tinggal)', 
+                    artist: 'Virgon feat',
+                    url: 'https://file.garden/afUH-nUJmzltJont/Virgoun%20feat.%20Audy%20-%20Selamat%20(Selamat%20Tinggal)%20(Official%20Lyric%20Visualizer).mp3'
+                },
+                { 
+                    title: 'So Asu', 
+                    artist: 'Naykilla',
+                    url: 'https://file.garden/afUH-nUJmzltJont/SO%20ASU%20-%20Naykilla.mp3'
+                }
+            ];
+
+            // ============ STARFIELD ANIMATION ============
+            let stars = [];
+            const starCount = 150;
+            
+            function initStarfield() {
+                starfieldCanvas.width = window.innerWidth;
+                starfieldCanvas.height = window.innerHeight;
+                stars = [];
+                for (let i = 0; i < starCount; i++) {
+                    stars.push({
+                        x: Math.random() * starfieldCanvas.width,
+                        y: Math.random() * starfieldCanvas.height,
+                        radius: Math.random() * 2 + 0.5,
+                        speed: Math.random() * 0.3 + 0.1,
+                        opacity: Math.random(),
+                        twinkleSpeed: Math.random() * 0.02 + 0.005
+                    });
+                }
+            }
+            
+            function animateStars() {
+                ctx.clearRect(0, 0, starfieldCanvas.width, starfieldCanvas.height);
+                const isLight = document.body.classList.contains('light-mode');
+                const starColor = isLight ? '100, 100, 120' : '255, 255, 255';
+                
+                stars.forEach(star => {
+                    star.y += star.speed;
+                    if (star.y > starfieldCanvas.height) {
+                        star.y = 0;
+                        star.x = Math.random() * starfieldCanvas.width;
+                    }
+                    star.opacity += star.twinkleSpeed;
+                    if (star.opacity > 1 || star.opacity < 0.2) star.twinkleSpeed *= -1;
+                    
+                    ctx.beginPath();
+                    ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(${starColor}, ${star.opacity})`;
+                    ctx.fill();
+                    
+                    // Glow effect
+                    if (star.radius > 1.5) {
+                        ctx.beginPath();
+                        ctx.arc(star.x, star.y, star.radius * 3, 0, Math.PI * 2);
+                        ctx.fillStyle = `rgba(${starColor}, ${star.opacity * 0.15})`;
+                        ctx.fill();
+                    }
+                });
+                requestAnimationFrame(animateStars);
+            }
+            
+            window.addEventListener('resize', initStarfield);
+            initStarfield();
+            animateStars();
+
+            // ============ NAVIGATION SYSTEM ============
+            function navigateTo(pageName) {
+                if (currentPage === pageName) return;
+                
+                // Update state
+                currentPage = pageName;
+                
+                // Update pages
+                pages.forEach(page => page.classList.remove('active'));
+                const targetPage = document.getElementById(`page-${pageName}`);
+                if (targetPage) targetPage.classList.add('active');
+                
+                // Update desktop nav
+                desktopNavItems.forEach(item => {
+                    item.classList.remove('active');
+                    if (item.dataset.page === pageName) item.classList.add('active');
+                });
+                
+                // Update mobile nav
+                mobileNavItems.forEach(item => {
+                    item.classList.remove('active');
+                    if (item.dataset.page === pageName) item.classList.add('active');
+                });
+                
+                // Scroll to top
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                
+                // Initialize game if navigating to game page
+                if (pageName === 'game') initGame();
+            }
+            
+            // Nav click handlers
+            desktopNavItems.forEach(item => {
+                item.addEventListener('click', () => navigateTo(item.dataset.page));
+            });
+            
+            mobileNavItems.forEach(item => {
+                item.addEventListener('click', () => navigateTo(item.dataset.page));
+            });
+
+            // ============ THEME TOGGLE ============
+            themeToggle.addEventListener('click', () => {
+                document.body.classList.toggle('light-mode');
+            });
+
+            // ============ TYPING EFFECT ============
+            const fullText = 'Welcome to My Galeri 😘🤓';
+            let charIndex = 0;
+            let isDeleting = false;
+            
+            function typeEffect() {
+                if (!document.getElementById('page-home').classList.contains('active')) {
+                    setTimeout(typeEffect, 1000);
+                    return;
+                }
+                
+                if (!isDeleting) {
+                    typingText.textContent = fullText.substring(0, charIndex + 1);
+                    charIndex++;
+                    if (charIndex === fullText.length) {
+                        setTimeout(() => { isDeleting = true; }, 2000);
+                    }
+                } else {
+                    typingText.textContent = fullText.substring(0, charIndex - 1);
+                    charIndex--;
+                    if (charIndex === 0) {
+                        isDeleting = false;
+                    }
+                }
+                
+                const speed = isDeleting ? 50 : 100;
+                setTimeout(typeEffect, speed);
+            }
+            typeEffect();
+
+            // ============ GALLERY - CAROUSEL ============
+            function updateCarousel() {
+                carouselTrack.style.transform = `translateX(-${carouselIndex * 100}%)`;
+                updateDots();
+                updateThumbHighlight();
+            }
+            
+            function createDots() {
+                carouselDots.innerHTML = '';
+                for (let i = 0; i < totalSlides; i++) {
+                    const dot = document.createElement('div');
+                    dot.classList.add('carousel-dot');
+                    if (i === carouselIndex) dot.classList.add('active');
+                    dot.addEventListener('click', () => {
+                        carouselIndex = i;
+                        updateCarousel();
+                    });
+                    carouselDots.appendChild(dot);
+                }
+            }
+            
+            function updateDots() {
+                const dots = carouselDots.querySelectorAll('.carousel-dot');
+                dots.forEach((dot, i) => {
+                    dot.classList.toggle('active', i === carouselIndex);
+                });
+            }
+            
+            function updateThumbHighlight() {
+                galleryThumbs.forEach(thumb => {
+                    const index = parseInt(thumb.dataset.index);
+                    thumb.style.border = index === carouselIndex ? 
+                        '2px solid var(--accent-gold)' : '2px solid transparent';
+                });
+            }
+            
+            function nextSlide() {
+                carouselIndex = (carouselIndex + 1) % totalSlides;
+                updateCarousel();
+            }
+            
+            function prevSlide() {
+                carouselIndex = (carouselIndex - 1 + totalSlides) % totalSlides;
+                updateCarousel();
+            }
+            
+            carouselNext.addEventListener('click', nextSlide);
+            carouselPrev.addEventListener('click', prevSlide);
+            
+            // Swipe support for carousel
+            const carouselMain = document.getElementById('carouselMain');
+            carouselMain.addEventListener('touchstart', (e) => {
+                touchStartX = e.changedTouches[0].screenX;
+                touchStartY = e.changedTouches[0].screenY;
+            }, { passive: true });
+            
+            carouselMain.addEventListener('touchend', (e) => {
+                touchEndX = e.changedTouches[0].screenX;
+                touchEndY = e.changedTouches[0].screenY;
+                handleSwipe();
+            });
+            
+            function handleSwipe() {
+                const diffX = touchStartX - touchEndX;
+                const diffY = Math.abs(touchStartY - touchEndY);
+                
+                // Only trigger if horizontal swipe is dominant
+                if (Math.abs(diffX) > diffY && Math.abs(diffX) > 50) {
+                    if (diffX > 0) {
+                        nextSlide(); // Swipe left
+                    } else {
+                        prevSlide(); // Swipe right
+                    }
+                }
+            }
+            
+            // Bubble effect on carousel images
+            carouselSlides.forEach(slide => {
+                const img = slide.querySelector('img');
+                img.addEventListener('click', function(e) {
+                    // Create bubble effect
+                    const bubble = document.createElement('div');
+                    bubble.classList.add('bubble-effect');
+                    const rect = this.getBoundingClientRect();
+                    bubble.style.left = (e.clientX - rect.left) + 'px';
+                    bubble.style.top = (e.clientY - rect.top) + 'px';
+                    slide.appendChild(bubble);
+                    
+                    // Remove bubble after animation
+                    setTimeout(() => bubble.remove(), 600);
+                    
+                    // Expand image
+                    expandImage(this.src);
+                });
+            });
+            
+            // Gallery thumb cards
+            galleryThumbs.forEach(thumb => {
+                thumb.addEventListener('click', function() {
+                    const index = parseInt(this.dataset.index);
+                    carouselIndex = index;
+                    updateCarousel();
+                    
+                    // Bubble effect
+                    const bubble = document.createElement('div');
+                    bubble.classList.add('bubble-effect');
+                    const rect = this.getBoundingClientRect();
+                    bubble.style.left = '50%';
+                    bubble.style.top = '50%';
+                    this.appendChild(bubble);
+                    setTimeout(() => bubble.remove(), 600);
+                });
+            });
+            
+            // Image expand overlay
+            function expandImage(src) {
+                expandedImage.src = src;
+                imageExpandOverlay.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+            }
+            
+            imageExpandOverlay.addEventListener('click', () => {
+                imageExpandOverlay.style.display = 'none';
+                document.body.style.overflow = '';
+            });
+            
+            // Keyboard navigation for carousel
+            document.addEventListener('keydown', (e) => {
+                if (currentPage === 'gallery') {
+                    if (e.key === 'ArrowLeft') prevSlide();
+                    if (e.key === 'ArrowRight') nextSlide();
+                }
+                if (e.key === 'Escape') {
+                    imageExpandOverlay.style.display = 'none';
+                    document.body.style.overflow = '';
+                }
+            });
+            
+            createDots();
+            updateCarousel();
+
+            // ============ MUSIC PLAYER ============
+            function buildPlaylist() {
+                playlistEl.innerHTML = '';
+                playlist.forEach((song, index) => {
+                    const item = document.createElement('div');
+                    item.classList.add('playlist-item');
+                    if (index === currentSongIndex) item.classList.add('active');
+                    item.textContent = `${index + 1}. ${song.title}`;
+                    item.addEventListener('click', () => loadSong(index));
+                    playlistEl.appendChild(item);
+                });
+            }
+            
+            function loadSong(index) {
+                currentSongIndex = index;
+                const song = playlist[index];
+                audioPlayer.src = song.url;
+                songTitle.textContent = song.title;
+                songArtist.textContent = song.artist;
+                updatePlaylistActive();
+                if (isPlaying) {
+                    audioPlayer.play().catch(() => {});
+                }
+            }
+            
+            function updatePlaylistActive() {
+                const items = playlistEl.querySelectorAll('.playlist-item');
+                items.forEach((item, i) => {
+                    item.classList.toggle('active', i === currentSongIndex);
+                });
+            }
+            
+            function togglePlay() {
+                if (!audioPlayer.src || audioPlayer.src === window.location.href) {
+                    loadSong(0);
+                }
+                if (isPlaying) {
+                    audioPlayer.pause();
+                } else {
+                    audioPlayer.play().catch(() => {});
+                }
+            }
+            
+            audioPlayer.addEventListener('play', () => {
+                isPlaying = true;
+                btnPlay.innerHTML = '<i class="fas fa-pause"></i>';
+                fabMusic.classList.add('playing');
+            });
+            
+            audioPlayer.addEventListener('pause', () => {
+                isPlaying = false;
+                btnPlay.innerHTML = '<i class="fas fa-play"></i>';
+                fabMusic.classList.remove('playing');
+            });
+            
+            audioPlayer.addEventListener('ended', () => {
+                // Play next song
+                currentSongIndex = (currentSongIndex + 1) % playlist.length;
+                loadSong(currentSongIndex);
+                audioPlayer.play().catch(() => {});
+            });
+            
+            audioPlayer.addEventListener('timeupdate', () => {
+                if (audioPlayer.duration) {
+                    const progress = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+                    musicProgressBar.style.width = progress + '%';
+                }
+            });
+            
+            musicProgress.addEventListener('click', (e) => {
+                const rect = musicProgress.getBoundingClientRect();
+                const percent = (e.clientX - rect.left) / rect.width;
+                if (audioPlayer.duration) {
+                    audioPlayer.currentTime = percent * audioPlayer.duration;
+                }
+            });
+            
+            btnPlay.addEventListener('click', togglePlay);
+            btnPrev.addEventListener('click', () => {
+                currentSongIndex = (currentSongIndex - 1 + playlist.length) % playlist.length;
+                loadSong(currentSongIndex);
+                if (isPlaying) audioPlayer.play().catch(() => {});
+            });
+            btnNext.addEventListener('click', () => {
+                currentSongIndex = (currentSongIndex + 1) % playlist.length;
+                loadSong(currentSongIndex);
+                if (isPlaying) audioPlayer.play().catch(() => {});
+            });
+            
+            fabMusic.addEventListener('click', () => {
+                isMusicPanelOpen = !isMusicPanelOpen;
+                musicPanel.classList.toggle('open', isMusicPanelOpen);
+            });
+            
+            // Close music panel when clicking outside
+            document.addEventListener('click', (e) => {
+                if (isMusicPanelOpen && 
+                    !musicPanel.contains(e.target) && 
+                    e.target !== fabMusic &&
+                    !fabMusic.contains(e.target)) {
+                    isMusicPanelOpen = false;
+                    musicPanel.classList.remove('open');
+                }
+            });
+            
+            buildPlaylist();
+
+            // ============ MINI GAME - MEMORY CARD MATCH ============
+            const emojis = ['🌟', '🎨', '🎵', '🚀', '🌈', '🎮', '💎', '🔥'];
+            
+            function initGame() {
+                gameMoves = 0;
+                matchedPairs = 0;
+                flippedCards = [];
+                gameLocked = false;
+                gameMovesEl.textContent = '0';
+                gameMatchedEl.textContent = '0';
+                gameMessage.textContent = '';
+                
+                // Create card pairs
+                const cardPairs = [...emojis, ...emojis];
+                // Shuffle
+                for (let i = cardPairs.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [cardPairs[i], cardPairs[j]] = [cardPairs[j], cardPairs[i]];
+                }
+                
+                gameCards = cardPairs;
+                renderGameCards();
+            }
+            
+            function renderGameCards() {
+                memoryGrid.innerHTML = '';
+                gameCards.forEach((emoji, index) => {
+                    const card = document.createElement('div');
+                    card.classList.add('memory-card');
+                    card.dataset.index = index;
+                    card.dataset.emoji = emoji;
+                    
+                    card.innerHTML = `
+                        <div class="memory-card-inner">
+                            <div class="memory-card-front">?</div>
+                            <div class="memory-card-back">${emoji}</div>
+                        </div>
+                    `;
+                    
+                    card.addEventListener('click', () => flipCard(card));
+                    memoryGrid.appendChild(card);
+                });
+            }
+            
+            function flipCard(card) {
+                if (gameLocked) return;
+                if (card.classList.contains('flipped') || card.classList.contains('matched')) return;
+                if (flippedCards.length >= 2) return;
+                
+                card.classList.add('flipped');
+                flippedCards.push(card);
+                
+                if (flippedCards.length === 2) {
+                    gameMoves++;
+                    gameMovesEl.textContent = gameMoves;
+                    checkMatch();
+                }
+            }
+            
+            function checkMatch() {
+                const [card1, card2] = flippedCards;
+                const match = card1.dataset.emoji === card2.dataset.emoji;
+                
+                if (match) {
+                    card1.classList.add('matched');
+                    card2.classList.add('matched');
+                    matchedPairs++;
+                    gameMatchedEl.textContent = matchedPairs;
+                    flippedCards = [];
+                    
+                    // Win check
+                    if (matchedPairs === totalPairs) {
+                        gameMessage.textContent = '🎉 Congratulations! You won! 🎉';
+                        gameMessage.style.color = 'var(--accent-gold)';
+                    }
+                } else {
+                    gameLocked = true;
+                    setTimeout(() => {
+                        card1.classList.remove('flipped');
+                        card2.classList.remove('flipped');
+                        flippedCards = [];
+                        gameLocked = false;
+                    }, 800);
+                }
+            }
+            
+            gameRestart.addEventListener('click', initGame);
+            
+            // Initialize game on load
+            initGame();
+
+            // ============ INITIALIZATION ============
+            navigateTo('home');
+            
+            console.log('✅ Portfolio SPA siap!');
+            console.log('📝 Ganti gambar gallery di HTML (img1.jpg - img25.jpg)');
+            console.log('🎵 Ganti URL lagu di variabel playlist (JavaScript)');
+            console.log('🖼️ Ganti foto profil di halaman Home');
+            console.log('🌓 Toggle tema di pojok kanan atas');
+            console.log('🎮 Mini-game Memory Match siap dimainkan!');
+        })();
+    </script>
+</body>
+</html>
